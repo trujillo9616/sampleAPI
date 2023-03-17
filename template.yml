@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  # Lambda Functions
+  RootFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs16.x
+      CodeUri: dist/healthFunction
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /
+            Method: GET
+
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs16.x
+      CodeUri: dist/healthFunction
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /_health
+            Method: GET
+
+  RegisterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs16.x
+      CodeUri: dist/registerFunction
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+      Environment:
+        Variables:
+          USERS_TABLE: !Ref UsersTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /register
+            Method: POST
+
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs16.x
+      CodeUri: dist/loginFunction
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+      Environment:
+        Variables:
+          USERS_TABLE: !Ref UsersTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /login
+            Method: POST
+
+  CidrToMaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs16.x
+      CodeUri: dist/cidrToMaskFunction
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /cidr-to-mask
+            Method: GET
+
+  MaskToCidrFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs16.x
+      CodeUri: dist/maskToCidrFunction
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /mask-to-cidr
+            Method: GET
+
+  UnknownEndpointFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs16.x
+      CodeUri: dist/unknownEndpointFunction
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+
+  # DynamoDB Tables
+  UsersTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      TableName: users
+
+Outputs:
+  MyApi:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
